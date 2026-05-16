@@ -1,6 +1,6 @@
 ---
 title: Testing guideline
-description: Guildelines for writing tests. Read before any task related to testing, like editing, writing, updating, reviewing, etc.
+description: Guidelines for writing tests. Read before any task related to testing, like editing, writing, updating, reviewing, etc.
 ---
 
 # Testing
