@@ -1,0 +1,9 @@
+{
+  "name": "agents",
+  "version": "1.0.0",
+  "description": "Cross-agent skills (go-conventions, gh-contribute, rust-learning, docker-build) and a code-reviewer agent",
+  "author": {
+    "name": "Gennadij Ivanov",
+    "email": "ivanov.gennadij.v@gmail.com"
+  }
+}

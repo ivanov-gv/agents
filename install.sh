@@ -8,6 +8,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_DIR="${REPO_DIR}/plugins/agents"
 TARGET_DIR="${PWD}"
 
 while [[ $# -gt 0 ]]; do
@@ -34,7 +35,7 @@ mkdir -p "${SKILLS_DEST}" "${AGENTS_DEST}"
 
 install_skill() {
   local name="$1"
-  local src="${REPO_DIR}/skills/${name}/SKILL.md"
+  local src="${PLUGIN_DIR}/skills/${name}/SKILL.md"
   local dest="${SKILLS_DEST}/${name}.md"
   cp "${src}" "${dest}"
   echo "  [skill] ${name} -> ${dest}"
@@ -49,7 +50,7 @@ install_skill docker-build
 
 install_agent() {
   local name="$1"
-  local src="${REPO_DIR}/agents/${name}.md"
+  local src="${PLUGIN_DIR}/agents/${name}.md"
   local dest="${AGENTS_DEST}/${name}.md"
   cp "${src}" "${dest}"
   echo "  [agent] ${name} -> ${dest}"

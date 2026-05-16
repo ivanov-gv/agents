@@ -1,28 +1,62 @@
 # AGENTS.md
 
-Project-level instructions for all AI coding agents (Claude Code, Codex, OpenCode).
+Project-level instructions for AI coding agents working in this repository.
 
-## About this repository
+## What this repo is
 
-This repository is a **cross-agent plugin** that provides shared skills and agents usable across multiple AI coding assistants. It is not a runnable application.
+A **Claude Code marketplace** that hosts a single cross-agent plugin (`agents`) containing reusable skills and agent definitions. The skills/agents content is also consumable by Codex and OpenCode via the `install.sh` fallback.
 
 ## Repository layout
 
 ```
-.claude-plugin/plugin.json   — Claude Code plugin manifest
-.codex-plugin/plugin.json    — Codex plugin manifest
-skills/                      — Reusable skill definitions (SKILL.md per skill)
-agents/                      — Shared agent definitions
-install.sh                   — Manual install helper for OpenCode and raw setups
-AGENTS.md                    — This file (project instructions for agents)
+.claude-plugin/
+  marketplace.json          — Marketplace catalog (lists plugins this repo offers)
+plugins/
+  agents/                   — The plugin
+    .claude-plugin/
+      plugin.json           — Plugin manifest (name, version, description, author)
+    .codex-plugin/
+      plugin.json           — Codex-compatible manifest
+    skills/
+      go-conventions/SKILL.md
+      gh-contribute/SKILL.md
+      rust-learning/SKILL.md
+      docker-build/SKILL.md
+    agents/
+      reviewer.md
+install.sh                  — Idempotent installer for OpenCode / raw setups
+AGENTS.md                   — This file
 ```
+
+## Installation
+
+### Claude Code
+
+```bash
+# Add this repo as a marketplace, then install the plugin
+/plugin marketplace add ivanov-gv/agents
+/plugin install agents@ivanov-gv
+```
+
+### Codex
+
+Codex reads `plugins/agents/.codex-plugin/plugin.json`. Vendor or symlink `plugins/agents/` into the Codex plugin search path.
+
+### OpenCode / raw setups
+
+```bash
+git clone https://github.com/ivanov-gv/agents.git
+./agents/install.sh --target /path/to/your/project
+```
+
+This copies skills into `.agents/skills/` and agents into `.agents/agents/` in the target project.
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
 | `go-conventions` | Go idioms, naming, error handling, project layout |
-| `gh-contribute` | Branch strategy, commit format, PR workflow |
+| `gh-contribute` | Branch strategy, conventional commits, PR workflow |
 | `rust-learning` | Ownership, lifetimes, idiomatic Rust patterns |
 | `docker-build` | Multi-stage builds, layer caching, CI integration |
 
@@ -30,20 +64,13 @@ AGENTS.md                    — This file (project instructions for agents)
 
 | Agent | Description |
 |-------|-------------|
-| `reviewer` | Code review: bugs, security, style — with structured output |
+| `reviewer` | Structured code review with BLOCK/WARN/NIT severity output |
 
 ## Contribution rules
 
-- All skill content lives in `skills/<name>/SKILL.md` — one file per skill, no subdirectories.
-- Agent definitions live in `agents/<name>.md`.
-- Both plugin manifests (`.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`) must be updated when adding or renaming a skill or agent.
-- `install.sh` must also be updated to copy new skill/agent files.
+- Add a new skill: create `plugins/agents/skills/<name>/SKILL.md`. No manifest edit needed — Claude Code auto-discovers `skills/`.
+- Add a new agent: create `plugins/agents/agents/<name>.md`. Same — auto-discovered.
+- Update `install.sh` to copy new skill/agent files for OpenCode users.
+- Bump `version` in `plugins/agents/.claude-plugin/plugin.json` for releases.
 - Follow the `gh-contribute` skill for branch naming and PR format.
-- Keep skill files focused and actionable — avoid vague advice.
-
-## What agents should do in this repo
-
-- When asked to add a skill: create `skills/<name>/SKILL.md` and register it in both `plugin.json` files and `install.sh`.
-- When asked to add an agent: create `agents/<name>.md` and register it in both `plugin.json` files and `install.sh`.
-- When asked to review code: invoke the `reviewer` agent.
-- Do not create build artifacts, binaries, or lock files — this repo has no build step.
+- Do not create build artifacts, lock files, or binaries — this repo has no build step.
