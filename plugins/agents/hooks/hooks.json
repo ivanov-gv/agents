@@ -1,0 +1,15 @@
+{
+  "description": "Inject the agents:* skill and subagent registry into every SubagentStart, so subagents can discover plugin skills even though they do not inherit the parent's skill registry.",
+  "hooks": {
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/inject-subagent-skills.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
