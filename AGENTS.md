@@ -68,8 +68,8 @@ This copies skills into `.agents/skills/` and agents into `.agents/agents/` in t
 
 ## Contribution rules
 
-- Add a new skill: create `plugins/agents/skills/<name>/SKILL.md`. No manifest edit needed — Claude Code auto-discovers `skills/`.
-- Add a new agent: create `plugins/agents/agents/<name>.md`. Same — auto-discovered.
+- Add a new skill: create `plugins/agents/skills/<name>/SKILL.md`. Claude Code auto-discovers `skills/` — but you must still bump the manifest version (see [Release workflow](#release-workflow)) for installed plugins to actually pick the new skill up.
+- Add a new agent: create `plugins/agents/agents/<name>.md`. Same — auto-discovered, but still requires a version bump to ship.
 - Update `install.sh` to copy new skill/agent files for OpenCode users.
 - Follow the `contribute-cli` skill for branch naming and PR format.
 - Do not create build artifacts, lock files, or binaries — this repo has no build step.
