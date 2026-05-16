@@ -1,0 +1,34 @@
+{
+  "name": "ivanov-gv/agents",
+  "version": "1.0.0",
+  "description": "Cross-agent plugin: shared skills and agents for Claude Code, Codex, and OpenCode",
+  "skills": [
+    {
+      "name": "go-conventions",
+      "description": "Go project conventions, idioms, and code style guidelines",
+      "path": "skills/go-conventions/SKILL.md"
+    },
+    {
+      "name": "gh-contribute",
+      "description": "GitHub contribution workflow: branching, PRs, reviews, and merging",
+      "path": "skills/gh-contribute/SKILL.md"
+    },
+    {
+      "name": "rust-learning",
+      "description": "Rust language learning guide: ownership, lifetimes, and idiomatic patterns",
+      "path": "skills/rust-learning/SKILL.md"
+    },
+    {
+      "name": "docker-build",
+      "description": "Docker image build, optimization, and multi-stage pipeline patterns",
+      "path": "skills/docker-build/SKILL.md"
+    }
+  ],
+  "agents": [
+    {
+      "name": "reviewer",
+      "description": "Code review agent: identifies bugs, style violations, and security issues",
+      "path": "agents/reviewer.md"
+    }
+  ]
+}

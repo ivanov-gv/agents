@@ -1,0 +1,29 @@
+{
+  "name": "ivanov-gv/agents",
+  "version": "1.0.0",
+  "description": "Cross-agent plugin: shared skills and agents for Claude Code, Codex, and OpenCode",
+  "skills": [
+    {
+      "name": "go-conventions",
+      "path": "skills/go-conventions/SKILL.md"
+    },
+    {
+      "name": "gh-contribute",
+      "path": "skills/gh-contribute/SKILL.md"
+    },
+    {
+      "name": "rust-learning",
+      "path": "skills/rust-learning/SKILL.md"
+    },
+    {
+      "name": "docker-build",
+      "path": "skills/docker-build/SKILL.md"
+    }
+  ],
+  "agents": [
+    {
+      "name": "reviewer",
+      "path": "agents/reviewer.md"
+    }
+  ]
+}
