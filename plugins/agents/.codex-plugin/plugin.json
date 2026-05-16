@@ -1,6 +1,6 @@
 {
   "name": "ivanov-gv/agents",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cross-agent plugin: shared skills and agents for Claude Code, Codex, and OpenCode",
   "skills": [
     {

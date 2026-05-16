@@ -1,6 +1,6 @@
 {
   "name": "agents",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Cross-agent skills (cicd, code quality, golang, contribute-cli) for Claude Code agents",
   "author": {
     "name": "Gennadij Ivanov",
