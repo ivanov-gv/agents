@@ -1,4 +1,5 @@
 ---
+title: Golang Conventions
 description: Best practices and rules to follow with <good-example> and <bad-example>. Must use in all Go projects. Read before any Golang related task, like writing, editing, updating, reviewing, refactoring, etc.
 ---
 

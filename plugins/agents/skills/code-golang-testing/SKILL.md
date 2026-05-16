@@ -1,4 +1,5 @@
 ---
+title: Golang Testing
 description: Golang specific skill for testing. Must use for writing, editing, updating and maintaining any tests in Golang projects, including unit, integration test and CI/CD tests.
 ---
 

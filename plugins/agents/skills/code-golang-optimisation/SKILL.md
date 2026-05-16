@@ -1,4 +1,5 @@
 ---
+title: Golang Optimisation
 description: Optimisation guidelines specific for Golang code. Read before refactoring and optimising any Golang code.
 ---
 
