@@ -39,9 +39,10 @@ In this document it is assumed that GHCR is used as the dev registry and
 
 CI workflows:
 
-1. Must not use a pre/production environment in any way.
-2. Must use only dev registry artifactory, which is considered a part of the development environment.
-3. Must not create tags or releases.
+1. Must have `ci-` prefix in the name.
+2. Must not use a pre/production environment in any way.
+3. Must use only dev registry artifactory, which is considered a part of the development environment.
+4. Must not create tags or releases.
 
 CD workflows:
 
@@ -301,9 +302,9 @@ test-run steps "no-op" — that defeats the purpose of exercising the same code 
 Take a look at the last line - `env:` block in `push-test-run` job references `needs.build.outputs.image`
 but actually needs `needs.build-test-run.outputs.image`.
 
-There are two ways to fix this:
-
-#### Duplicate the `env:` block.
+Fix it by duplicating the `env:` block. Pair each downstream job with its matching upstream
+sibling directly, copy the `env:` section, and keep the steps anchor — the only line that differs
+is the one that reads the upstream output:
 
 ```yaml
    - push:
@@ -321,22 +322,6 @@ There are two ways to fix this:
          - IMAGE_TAG: ${{ needs.build-test-run.outputs.image }} # but be careful when editing 
        steps: *push-steps
 ```
-
-#### Don't try a fan-in job — it breaks `act`
-
-The "obvious" alternative is a middle job that coalesces the two pair outputs
-(`build-out` with `if: !cancelled() && (build.result == 'success' || build-test-run.result == 'success')`
-and `outputs.image_tag: ${{ needs.build.outputs.image_tag || needs.build-test-run.outputs.image_tag }}`),
-then downstream jobs `needs: [build-out]`. It looks clean on paper but **does not survive `act` /
-`act -n`**: when the unused half of the upstream pair is skipped, the `needs` context for jobs that
-depend (transitively) on the fan-in is poisoned, and downstream `if:` expressions referencing
-*another* `needs.<job>.outputs.x` evaluate as if the job were skipped. Real cases (`act -n` on a
-CD workflow): both production-lane and test-run-lane deploy jobs get dropped, even though the
-`switch.outputs.test_run` value is correct on the same run for the upstream `retag` pair.
-
-**Use the duplicated `env:` block above.** Pair each downstream job with its matching upstream
-sibling directly (`deploy → retag`, `deploy-test-run → retag-test-run`), copy the `env:` section,
-and keep the steps anchor. The only line that differs is the one that reads the upstream output.
 
 ## Hide global var references in `env:` blocks
 
