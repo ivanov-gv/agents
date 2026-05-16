@@ -1,3 +1,8 @@
+---
+name: go-conventions
+description: Use when writing or reviewing Go code — package layout, naming (PascalCase/camelCase, acronyms, no stutter), error handling with `%w` wrapping, table-driven tests, context-first I/O signatures, channel-based concurrency, and `go mod` hygiene.
+---
+
 # go-conventions
 
 Apply Go project conventions, idioms, and code style when writing or reviewing Go code in this repo.

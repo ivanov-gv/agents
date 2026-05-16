@@ -1,3 +1,8 @@
+---
+name: rust-learning
+description: Use when explaining, writing, or reviewing Rust code — covers ownership/borrow rules, lifetimes (`'a`, `'static`), idiomatic `Option`/`Result`/`?`, iterator patterns, common beginner pitfalls (clone overuse, `unwrap` in prod, fighting the borrow checker), and `cargo check`/`clippy`/`test`/`doc` workflow.
+---
+
 # rust-learning
 
 Rust learning guidance: explain ownership, lifetimes, and idiomatic patterns when writing or reviewing Rust code.

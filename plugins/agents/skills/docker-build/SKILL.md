@@ -1,3 +1,8 @@
+---
+name: docker-build
+description: Use when authoring or reviewing Dockerfiles, optimizing image size, configuring multi-stage builds, setting up layer caching, or wiring `docker buildx` into CI. Covers builder/runtime stage split, `.dockerignore`, base-image hygiene, non-root users, and registry cache patterns.
+---
+
 # docker-build
 
 Docker image build, optimization, and multi-stage pipeline patterns.

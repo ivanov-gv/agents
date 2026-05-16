@@ -1,3 +1,8 @@
+---
+name: gh-contribute
+description: Use when creating branches, writing commit messages, opening pull requests, doing code review, or cutting releases in this repo (or any repo that follows the same conventions). Defines branch naming, Conventional Commits, PR body template, review etiquette, and release flow.
+---
+
 # gh-contribute
 
 GitHub contribution workflow for this repo: branching strategy, PR creation, review, and merge.
