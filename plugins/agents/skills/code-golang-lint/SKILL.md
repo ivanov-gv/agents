@@ -1,6 +1,6 @@
 ---
-title: Golang Linting
-description: Linting Golang source code with golangci-lint. Use for configuring and running the linter.
+name: code-golang-lint
+description: Linting Golang source code with golangci-lint. Use for configuring and running the linter and fixing its findings.
 ---
 
 # Linting

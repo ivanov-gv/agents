@@ -1,0 +1,123 @@
+{
+  "$comment": "Mandatory skills delivered deterministically by hooks/guidelines.mjs. Each entry injects skills/<skill>/SKILL.md once per session when a touched path matches `paths` or the prompt matches `prompt`. `requires` lists files that must exist at the repository root. Skills not listed here are procedures loaded on demand.",
+  "limits": {
+    "guidelineMaxBytes": 10240
+  },
+  "guidelines": [
+    {
+      "skill": "code-general",
+      "paths": [
+        "**/*.go",
+        "**/*.py",
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.cjs",
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.jsx",
+        "**/*.rs",
+        "**/*.java",
+        "**/*.kt",
+        "**/*.rb",
+        "**/*.c",
+        "**/*.h",
+        "**/*.cpp",
+        "**/*.cs",
+        "**/*.swift",
+        "**/*.sh",
+        "**/*.ex",
+        "**/*.exs"
+      ]
+    },
+    {
+      "skill": "code-general-testing",
+      "paths": [
+        "**/*_test.go",
+        "**/test_*.py",
+        "**/*_test.py",
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/tests/**",
+        "**/__tests__/**",
+        "**/testdata/**"
+      ],
+      "prompt": "\\b(unit|integration|e2e|regression) tests?\\b|\\btest (case|coverage|suite)|\\bwrite tests?\\b|\\badd tests?\\b"
+    },
+    {
+      "skill": "code-golang-conventions",
+      "paths": [
+        "**/*.go",
+        "**/go.mod",
+        "**/go.sum",
+        "**/go.work"
+      ],
+      "prompt": "golang|\\.go\\b|go\\.(mod|sum|work)\\b|\\bgo (test|vet|build|run|module|generate)\\b"
+    },
+    {
+      "skill": "code-golang-testing",
+      "paths": [
+        "**/*_test.go",
+        "**/testdata/**"
+      ],
+      "prompt": "_test\\.go\\b|\\bgo test\\b|testify",
+      "requires": [
+        "go.mod"
+      ]
+    },
+    {
+      "skill": "code-golang-lint",
+      "paths": [
+        "**/.golangci.yml",
+        "**/.golangci.yaml",
+        "**/.golangci.toml"
+      ],
+      "prompt": "golangci|\\blint(er|ing)?\\b.*\\bgo\\b|\\bgo\\b.*\\blint"
+    },
+    {
+      "skill": "code-golang-docker",
+      "paths": [
+        "**/Dockerfile",
+        "**/Dockerfile.*",
+        "**/*.Dockerfile",
+        "**/docker-compose*.yml",
+        "**/compose*.yaml",
+        "**/deploy/**"
+      ],
+      "requires": [
+        "go.mod"
+      ]
+    },
+    {
+      "skill": "cicd-github",
+      "paths": [
+        ".github/workflows/**",
+        ".github/actions/**"
+      ],
+      "prompt": "github actions?|\\.github/(workflows|actions)|\\bworkflow(s)?\\b.*\\b(ci|cd|github)\\b"
+    },
+    {
+      "skill": "cicd-general",
+      "paths": [
+        ".github/workflows/**",
+        ".github/actions/**",
+        ".gitlab-ci.yml",
+        "**/.gitlab-ci.yml",
+        "**/Jenkinsfile",
+        ".circleci/**",
+        "**/azure-pipelines.yml",
+        "**/.woodpecker.yml",
+        ".woodpecker/**"
+      ],
+      "prompt": "github actions?|\\.github/workflows|gitlab ci|jenkins|circleci|\\bci/cd\\b|\\bpipeline architecture\\b"
+    },
+    {
+      "skill": "code-general-documentation",
+      "paths": [
+        "**/README.md",
+        "**/AGENTS.md",
+        "**/CLAUDE.md"
+      ],
+      "prompt": "\\breadme\\b|agents\\.md|claude\\.md"
+    }
+  ]
+}

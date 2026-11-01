@@ -1,75 +1,44 @@
 ---
-title: Golang Conventions
+name: code-golang-conventions
 description: Best practices and rules to follow with <good-example> and <bad-example>. Must use in all Go projects. Read before any Golang related task, like writing, editing, updating, reviewing, refactoring, etc.
 ---
 
 # Convention
 
-Best practices and rules to follow with <good-example> and <bad-example>
+Best practices and rules to follow with <good-example> and <bad-example>. Project instructions take precedence where
+they differ.
 
-## Project Structure Convention
+## Project structure
 
-- `cmd/` — Executable entry points. One subdirectory per binary. Each contains only a `main.go` with minimal wiring (
-  config loading, dependency init, server start).
-- `internal/` — Anything and everything unexportable to other repos (e.g. business logic, internal utils, etc.)
-- `internal/app/` — Core application/business logic. Orchestrates services.
-- `internal/client/` — External API and system clients. One subpackage per client (e.g. `git/`, `github/`, `auth/`).
-  Clients handle all communication with external systems and APIs.
-- `internal/config/` — Configuration loading from environment variables.
-- `internal/server/` — HTTP server, routing, request/response mapping.
-- `internal/service/` — Domain services. One package per concern (e.g. `parser/`, `render/`, `name/`). Services may have
-  subpackages for internal structure.
-- `internal/model/` — Data types and constants. One subpackage per domain (e.g. `timetable/`, `message/`, `callback/`).
-  No business logic here.
-- `internal/utils/` — Generic reusable helpers not tied to any domain. One subpackage per concern (e.g. `format/`).
-- `internal/.../utils` — Reusable helpers tied to a domain.
-- `pkg/` — Shared packages for other repos.
-- `pkg/model/` — Exported models for other repos.
-- `gen/` — Generated code. Do not edit manually. Includes generated data files and mockery-generated test mocks (
-  configured in `.mockery.yaml`).
-- `test/` — Integration tests (separated from unit tests which live next to source files in `internal/`).
-- `deploy/` — Deployment configuration (Dockerfile, etc.).
-- `docs/` — Documentation and resources.
-- `.env.example` — Template for required environment variables. Copy to `.env` and fill in values. `.env` is gitignored
-  and loaded by `Makefile` via `include .env`.
+Full reference with every directory and the request flow: [project layout](../../docs/golang/project-layout.md). Read it
+before adding a package, binary, or layer.
 
-> **Rule**: every folder directly under `internal/` must be a category (a type of structure such as `service/`,
-`client/`, `model/`), never an individual package. Individual packages live one level deeper inside their category
-> folder. Do not add new packages directly under `internal/`.
+- `cmd/<binary>/main.go` only wires things together: load config, create the app, start the server.
+- Everything not exported to other repos lives in `internal/`; shared code for other repos in `pkg/`.
+- Every folder directly under `internal/` must be a category (a type of structure such as `service/`, `client/`,
+  `model/`), never an individual package. Individual packages live one level deeper inside their category folder. Do
+  not add new packages directly under `internal/`.
+- `gen/` holds generated code (including mockery mocks). Never edit it manually.
+- Unit tests live next to the source; integration tests in `test/`; deployment config in `deploy/`.
+- File names: `<package_name>.go` for the main type, `const.go`, `errors.go` for sentinel errors, `mapper.go` for
+  conversions between layers, `*_test.go` for unit tests.
 
-## File Naming Conventions
+## Layers
 
-- `<package_name>.go` — Main file of a package. Contains the primary type and its core logic (e.g.
-  `blacklist/blacklist.go`, `callback/callback.go`).
-- `const.go` — Package-level constants and variable declarations.
-- `errors.go` — Sentinel errors for the package (`var ErrSomething = errors.New(...)`).
-- `mapper.go` — Conversion functions between types of different layers/domains. Placed in the package that owns the
-  conversion (e.g. `server/mapper.go` converts between Telegram API types and internal `model/message` types;
-  `date/mapper.go` converts between `time.Time` and `int64`).
-- `*_test.go` — Unit tests, next to the source file they test.
+- `server` handles transport, `app` orchestrates services, `service` packages each do one thing, `client` packages
+  talk to external systems, `config` reads env vars into a struct.
+- Services receive and return internal model types and do not call each other — the app layer coordinates them.
+- `internal/model/` holds pure data types and constants: no logic, no dependencies on other layers.
+- Mappers live at layer boundaries in `mapper.go`, named `<Source>To<Target>`, `from<Source>` (external → internal), or
+  `to<Target>` (internal → external).
+- Environment-specific behavior (`ENVIRONMENT=PROD|PREPROD`) is injected only in the server layer; app and services stay
+  unaware of it. Runtime configuration comes only from environment variables
+  ([service runtime](../../docs/golang/service-runtime.md)).
 
-## Control Flow and Layers
+## Services in production
 
-**Layers** (`main.go` → business logic):
-
-1. `cmd/<binary>/main.go` — Loads config, creates the app, starts the server. Minimal wiring only.
-2. `internal/config/` — Reads environment variables into a config struct.
-3. `internal/server/` — `RunServer()` starts the server for connecting with the outer world and wires handlers (e.g.
-   http server and handlers)
-4. `internal/app/` — `NewApp()` initializes all services and business logic. The `App` struct holds all service
-   dependencies. Orchestrates services to fulfill the request. Knows about business logic but not about transport or
-   external API types.
-5. `internal/service/`) — Each service is a focused unit doing one thing (finding routes, resolving names, rendering
-   messages, etc.). Services receive and return internal model types. Services do not call each other — the app layer
-   coordinates them.
-
-In between layers are:
-
-- `internal/model/` — Pure data types and constants. No logic, no dependencies on other layers. Shared across all layers
-  as the common language.
-- `.../mapper.go` - live at layer boundaries. They convert between external types and internal model types. Mappers are
-  always named as `<Source>To<Target>`, `from<Source>` (for external → internal mappers), `to<Target>` (for internal →
-  external mappers).
+- Expose `/healthz` (liveness) and `/readyz` (readiness) for k8s — they are not the same check
+- Handle `SIGTERM` with graceful shutdown and a timeout context
 
 ## Code Structure
 
@@ -82,12 +51,12 @@ as arguments and return a pointer:
 
 ```go
 func NewPathFinder(deps ...) *PathFinder {
-return &PathFinder{...}
+	return &PathFinder{...}
 }
 
 type PathFinder struct {
-field1 Type1 // unexported fields
-field2 Type2
+	field1 Type1 // unexported fields
+	field2 Type2
 }
 ```
 
@@ -116,9 +85,9 @@ Models use flat structs with a `Type` field + optional data fields per variant i
 
 ```go
 type Callback struct {
-Type             Type
-UpdateData       UpdateData       // populated when Type == UpdateType
-ReverseRouteData ReverseRouteData // populated when Type == ReverseRouteType
+	Type             Type
+	UpdateData       UpdateData       // populated when Type == UpdateType
+	ReverseRouteData ReverseRouteData // populated when Type == ReverseRouteType
 }
 ```
 
@@ -186,30 +155,30 @@ func BadFunction(user User, data []int) error { // A bad example:
 ```go
 
 func GoodFunction(user User, data []int) error { // A good example:
-// Use a guard clause for the 'IsActive' check
-if !user.IsActive {
-return errors.New("user is inactive")
-}
+	// Use a guard clause for the 'IsActive' check
+	if !user.IsActive {
+		return errors.New("user is inactive")
+	}
 
-// Use a guard clause for the 'len(data)' check
-if len(data) == 0 {
-return errors.New("no data to process")
-}
+	// Use a guard clause for the 'len(data)' check
+	if len(data) == 0 {
+		return errors.New("no data to process")
+	}
 
-avg := calculateAverage(data)
+	avg := calculateAverage(data)
 
-// Use a guard clause for the 'avg' check
-if avg <= 50 {
-return errors.New("average too low")
-}
+	// Use a guard clause for the 'avg' check
+	if avg <= 50 {
+		return errors.New("average too low")
+	}
 
-// Process the main logic without deep nesting
-err := storeResult(avg)
-if err != nil { // Handle the potential error with an early return
-return err
-}
+	// Process the main logic without deep nesting
+	err := storeResult(avg)
+	if err != nil { // Handle the potential error with an early return
+		return err
+	}
 
-return nil
+	return nil
 }
 
 ```

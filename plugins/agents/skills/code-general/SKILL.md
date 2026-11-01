@@ -1,5 +1,5 @@
 ---
-title: General Code guideline
+name: code-general
 description: Read before doing any coding related tasks like editing, writing, reviewing code, etc.
 ---
 

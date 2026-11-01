@@ -1,29 +1,29 @@
 {
-  "name": "ivanov-gv/agents",
-  "version": "1.0.1",
-  "description": "Cross-agent plugin: shared skills and agents for Claude Code, Codex, and OpenCode",
-  "skills": [
-    {
-      "name": "go-conventions",
-      "path": "skills/go-conventions/SKILL.md"
-    },
-    {
-      "name": "gh-contribute",
-      "path": "skills/gh-contribute/SKILL.md"
-    },
-    {
-      "name": "rust-learning",
-      "path": "skills/rust-learning/SKILL.md"
-    },
-    {
-      "name": "docker-build",
-      "path": "skills/docker-build/SKILL.md"
-    }
+  "name": "agents",
+  "version": "1.2.0",
+  "description": "Personal engineering skills for Claude Code and Codex: coding, testing, Go, CI/CD and docs guidelines, with mandatory ones injected by file path",
+  "author": {
+    "name": "Gennadij Ivanov",
+    "email": "ivanov.gennadij.v@gmail.com"
+  },
+  "homepage": "https://github.com/ivanov-gv/agents",
+  "repository": "https://github.com/ivanov-gv/agents",
+  "keywords": [
+    "skills",
+    "guidelines",
+    "golang",
+    "ci-cd",
+    "testing"
   ],
-  "agents": [
-    {
-      "name": "reviewer",
-      "path": "agents/reviewer.md"
-    }
-  ]
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "ivanov-gv agents",
+    "shortDescription": "Coding, Go, testing and CI/CD guidelines",
+    "developerName": "Gennadij Ivanov",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read"
+    ]
+  }
 }

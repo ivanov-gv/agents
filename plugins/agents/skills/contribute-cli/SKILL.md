@@ -1,5 +1,5 @@
 ---
-title: Contribute CLI
+name: contribute-cli
 description: Must use whenever you need to interact with GitHub. Get authenticated in GitHub, read issues, PRs, comments, leave comments, reactions, and more with `contribute` CLI.
 ---
 
