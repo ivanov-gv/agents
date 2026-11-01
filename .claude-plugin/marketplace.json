@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "ivanov-gv",
-  "description": "Personal marketplace for cross-agent skills and agents shared across Claude Code, Codex, and OpenCode",
+  "description": "Personal marketplace for cross-agent skills shared across Claude Code and Codex",
   "owner": {
     "name": "Gennadij Ivanov",
     "email": "ivanov.gennadij.v@gmail.com"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "agents",
-      "description": "Cross-agent skills (go-conventions, gh-contribute, rust-learning, docker-build) and a code-reviewer agent",
+      "description": "Personal engineering skills for Claude Code and Codex: coding, testing, Go, CI/CD and docs guidelines, with mandatory ones injected by file path",
       "author": {
         "name": "Gennadij Ivanov",
         "email": "ivanov.gennadij.v@gmail.com"

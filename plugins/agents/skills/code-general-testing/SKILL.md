@@ -1,5 +1,5 @@
 ---
-title: Testing guideline
+name: code-general-testing
 description: Guidelines for writing tests. Read before any task related to testing, like editing, writing, updating, reviewing, etc.
 ---
 

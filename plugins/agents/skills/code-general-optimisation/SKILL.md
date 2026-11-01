@@ -1,5 +1,5 @@
 ---
-title: Optimisation Techniques
+name: code-general-optimisation
 description: General optimisation techniques and workflow. Read before any task related to performance, refactoring for speed, or reducing resource usage.
 ---
 

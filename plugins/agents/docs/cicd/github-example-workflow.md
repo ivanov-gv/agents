@@ -1,0 +1,91 @@
+---
+summary: A complete CI workflow (from zpcg) that follows the CI/CD rules - tag/manual triggers, test-run switch, anchored job pair.
+rules: ../../skills/cicd-github/SKILL.md
+updated: 2026-11-01
+---
+
+# Example GitHub workflow: CI push to GHCR
+
+Builds the image and pushes it to the dev registry (GHCR). The test-run job runs the same steps with read-only package
+permissions in the `test-run` environment. See [test-run model](test-run-model.md) and [CI vs CD](ci-vs-cd.md).
+
+```yaml
+
+name: CI - push to ghcr.io
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      test_run:
+        description: Test run
+        type: boolean
+        default: true
+
+jobs:
+  switch:
+    name: Test-run switch
+    runs-on: ubuntu-latest
+    outputs:
+      test_run: ${{ steps.test_run.outputs.test_run }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: test_run
+        uses: ./.github/actions/test_run
+        with:
+          test_run: ${{ inputs.test_run }}
+
+  build-and-push:
+    name: Build and push ZPCG image
+    needs: switch
+    if: needs.switch.outputs.test_run != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    environment: dev
+    env: &build-and-push-env
+      IMAGE_TAG_SHA: ${{ vars.ENV_REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+      IMAGE_TAG_TAG: ${{ vars.ENV_REGISTRY }}/${{ github.repository }}:${{ github.ref_name }}
+    steps: &build-and-push-steps
+      - uses: actions/checkout@v6
+
+      - name: Login to GHCR (dev registry)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: 'true'
+          tags: |
+            ${{ env.IMAGE_TAG_SHA }}
+            ${{ env.IMAGE_TAG_TAG }}
+
+      - name: Push
+        run: |
+          docker push ${{ env.IMAGE_TAG_SHA }}
+          docker push ${{ env.IMAGE_TAG_TAG }}
+
+  build-and-push-test-run:
+    name: Build CI image (test-run)
+    needs: switch
+    if: needs.switch.outputs.test_run == 'true'
+    runs-on: ubuntu-latest
+    environment: test-run
+    permissions:
+      contents: read
+      packages: read # <-- test-run mode
+      id-token: write
+    env: *build-and-push-env
+    steps: *build-and-push-steps
+
+
+```

@@ -19,6 +19,7 @@ extract_field() {
     }
     in_fm && $0 ~ "^"field":[[:space:]]" {
       sub("^"field":[[:space:]]*", "")
+      if ($0 ~ /^".*"$/) { $0 = substr($0, 2, length($0) - 2); gsub(/\\"/, "\"") }
       print
       exit
     }

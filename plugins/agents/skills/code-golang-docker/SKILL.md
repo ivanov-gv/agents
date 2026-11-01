@@ -1,6 +1,6 @@
 ---
-title: Build a Golang app with Docker
-description: Build a Golang app with Docker.
+name: code-golang-docker
+description: "Build a Golang app into a Docker image: static binaries, ldflags, multi-stage builds, runtime configuration. Use when writing or reviewing Dockerfiles or deployment config for Go projects."
 ---
 
 # Build
@@ -13,42 +13,18 @@ description: Build a Golang app with Docker.
 
 # Docker
 
-- Multi-stage build — build in `golang:alpine`, copy binary to runtime image
-- Prefer the tiniest image possible, a `scratch` image for example
+- The Dockerfile and other deployment configuration live in `deploy/`
+- Multi-stage build — build in `golang:alpine` (install CA certificates there), copy the binary and CA certs to the
+  runtime image
+- Prefer the tiniest image possible, a `scratch` image for example (or `distroless`): no shell, no package manager
 - Only copy the binary into the final image
 - Avoid installing runtime dependencies as much as possible. Keep the runtime the cleanest you can
 
-# Deploy
+# Runtime configuration
 
-- Expose `/healthz` (liveness) and `/readyz` (readiness) for k8s — they are not the same check
-- Handle `SIGTERM` with graceful shutdown and a timeout context
-- Set `GOMEMLIMIT` to ~85% of the container memory limit
 - No config baked into the image — env vars or mounted files only
+- Set `GOMEMLIMIT` to ~85% of the container memory limit
+- Secrets come from the cloud provider's secret manager, never from `.env.example`, the image, or code
 
-## Docker
-
-All deployment configuration lives in `deploy/`. Use a multi-stage Dockerfile:
-
-1. **Builder stage** — Full SDK image (e.g. `golang:1.23-alpine`). Install CA certificates, copy sources, build a
-   static binary with `CGO_ENABLED=0`.
-2. **Runtime stage** — Minimal base image (`scratch` or `distroless`). Copy only the binary and CA certs from the
-   builder.
-   No shell, no package manager, no extra attack surface.
-
-## Environment configuration
-
-Runtime configuration is passed via environment variables, not config files. This keeps the image immutable and
-environment-agnostic.
-
-- `.env.example` lists all variables with placeholders. Copy to `.env` for local development.
-- `.env` is gitignored and loaded by `Makefile` via `include .env`.
-- Secrets (API tokens, etc.) are stored in the cloud provider's secret manager, never in `.env.example` or code.
-
-## Environments
-
-Use the `ENVIRONMENT` variable to distinguish between environments:
-
-- `PROD` — Production. Default behavior.
-- `PREPROD` — Pre-production/staging. Enables extra warnings or debug features via post-handlers in the server layer
-  (e.g. appending a test environment warning to every response). The app and service layers stay unaware of the
-  environment — environment-specific behavior is injected at the server layer only.
+Details (Dockerfile stages, `.env` workflow, `ENVIRONMENT` values): [service runtime](../../docs/golang/service-runtime.md).
+Health checks and graceful shutdown are code rules in `code-golang-conventions`.
