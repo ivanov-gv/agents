@@ -1,7 +1,7 @@
 {
   "name": "agents",
-  "version": "1.2.0",
-  "description": "Personal engineering skills for Claude Code and Codex: coding, testing, Go, CI/CD and docs guidelines, with mandatory ones injected by file path",
+  "version": "2.0.0",
+  "description": "Personal engineering skills for Claude Code and Codex: coding, testing, Go, CI/CD and docs guidelines, plus a compliance review",
   "author": {
     "name": "Gennadij Ivanov",
     "email": "ivanov.gennadij.v@gmail.com"
@@ -16,10 +16,9 @@
     "testing"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "ivanov-gv agents",
-    "shortDescription": "Coding, Go, testing and CI/CD guidelines",
+    "shortDescription": "Coding, Go, testing and CI/CD guidelines, plus compliance review",
     "developerName": "Gennadij Ivanov",
     "category": "Developer Tools",
     "capabilities": [

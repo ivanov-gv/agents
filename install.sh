@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# install.sh — fallback for agents without plugin support (OpenCode, raw setups).
-# Prefer the plugin: it also delivers mandatory skills by file path via hooks. See README.md.
+# install.sh — copies skills for agents without plugin support (OpenCode, raw setups), path-scoped
+# Claude rules for one project, and the Codex compliance reviewer (Codex plugins cannot ship agents).
 #
-# Usage: ./install.sh [--target DIR] [--claude-rules]
+# Usage: ./install.sh [--target DIR] [--claude-rules] [--codex-agents]
 #   --target DIR     project to install into (default: current directory)
 #   --claude-rules   also write .claude/rules/<skill>.md with `paths` frontmatter from
-#                    plugins/agents/guidelines.json, so Claude Code loads them by path without the plugin
+#                    plugins/agents/guidelines.json, so Claude Code loads them by path
+#   --codex-agents   only install the Codex compliance_reviewer agent into ${CODEX_HOME:-~/.codex}/agents
+#                    (personal, every project); skips everything else
 #
 # Copies skills to DIR/.agents/skills/<name>/SKILL.md and docs to DIR/.agents/docs/. Safe to re-run; overwrites only files it owns.
 
@@ -15,15 +17,26 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="${REPO_DIR}/plugins/agents"
 TARGET_DIR="${PWD}"
 CLAUDE_RULES=0
+CODEX_AGENTS=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --target) TARGET_DIR="$2"; shift 2 ;;
     --claude-rules) CLAUDE_RULES=1; shift ;;
-    -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
+    --codex-agents) CODEX_AGENTS=1; shift ;;
+    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
+
+if [[ "${CODEX_AGENTS}" == 1 ]]; then
+  agents_dir="${CODEX_HOME:-${HOME}/.codex}/agents"
+  mkdir -p "${agents_dir}"
+  cp "${PLUGIN_DIR}"/codex/agents/*.toml "${agents_dir}/"
+  echo "  [codex agent] compliance_reviewer -> ${agents_dir}/compliance-reviewer.toml"
+  echo "Done. It uses the compliance-review skill, so keep the agents plugin installed in Codex."
+  exit 0
+fi
 
 echo "Installing ivanov-gv/agents skills into: ${TARGET_DIR}"
 
@@ -39,6 +52,8 @@ done
 mkdir -p "${TARGET_DIR}/.agents/docs"
 cp -R "${PLUGIN_DIR}/docs/." "${TARGET_DIR}/.agents/docs/"
 echo "  [docs]  -> ${TARGET_DIR}/.agents/docs"
+# compliance-review links ../../guidelines.json for the skills' path scopes.
+cp "${PLUGIN_DIR}/guidelines.json" "${TARGET_DIR}/.agents/guidelines.json"
 
 if [[ "${CLAUDE_RULES}" == 1 ]]; then
   node - "${PLUGIN_DIR}" "${TARGET_DIR}/.claude/rules" <<'EOF'

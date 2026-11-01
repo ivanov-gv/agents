@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "agents",
-      "description": "Personal engineering skills for Claude Code and Codex: coding, testing, Go, CI/CD and docs guidelines, with mandatory ones injected by file path",
+      "description": "Personal engineering skills for Claude Code and Codex: coding, testing, Go, CI/CD and docs guidelines, plus a compliance review",
       "author": {
         "name": "Gennadij Ivanov",
         "email": "ivanov.gennadij.v@gmail.com"

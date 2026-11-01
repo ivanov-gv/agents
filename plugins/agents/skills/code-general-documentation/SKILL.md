@@ -42,7 +42,8 @@ Rules:
 
 - Do not put general, cross-project conventions in project instructions. Personal conventions come from this plugin;
   project language rules live in `docs/engineering/<lang>.md` and are delivered by path (Claude `.claude/rules` with
-  `paths`, nested AGENTS.md or hooks for Codex).
+  `paths`, nested AGENTS.md for Codex). Do not add agent hooks; check compliance with a reviewer agent and enforce with
+  linters, git hooks and CI.
 - Add a nested AGENTS.md only where a directory needs different rules. Codex loads the chain from the root to its
   startup directory once, within a shared 32 KiB budget, so keep every file in the chain small.
 - Prefer enforcement over prose: if a rule can be a linter, test, or CI check, make it one and delete the sentence.

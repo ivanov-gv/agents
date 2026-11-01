@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// Repository checks: node scripts/check.mjs (run before committing; also runs the hook tests).
+// Repository checks: node scripts/check.mjs (run before committing).
 // - every skill has name (= directory) and a non-empty one-line description
-// - guidelines.json references existing skills, valid globs/regexes, and bounded sizes
+// - guidelines.json (path scopes for install.sh --claude-rules) references existing skills with bounded sizes
 // - Claude and Codex manifests agree on name/version/description; both marketplaces point at the plugin
+// - the plugin ships no hooks; the compliance reviewer agents are read-only and use the compliance-review skill
 // - AGENTS.md/README.md mention every skill, so docs cannot silently go stale
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,10 +37,10 @@ for (const g of config.guidelines) {
   if (!skills.includes(g.skill)) fail(`guidelines.json: unknown skill ${g.skill}`);
   if (seen.has(g.skill)) fail(`guidelines.json: duplicate skill ${g.skill}`);
   seen.add(g.skill);
-  if (!g.paths?.length && !g.prompt) fail(`guidelines.json: ${g.skill} has no trigger`);
-  if (g.prompt) { try { new RegExp(g.prompt, 'i'); } catch (e) { fail(`guidelines.json: ${g.skill} prompt: ${e.message}`); } }
+  if (!g.paths?.length) fail(`guidelines.json: ${g.skill} has no paths`);
+  for (const key of Object.keys(g)) if (!['skill', 'paths', 'requires'].includes(key)) fail(`guidelines.json: ${g.skill} has unsupported field "${key}"`);
   const size = skills.includes(g.skill) ? fs.statSync(path.join(plugin, 'skills', g.skill, 'SKILL.md')).size : 0;
-  if (size > config.limits.guidelineMaxBytes) fail(`skills/${g.skill}: ${size} bytes exceeds ${config.limits.guidelineMaxBytes}; it is injected whole, so split or trim it`);
+  if (size > config.limits.guidelineMaxBytes) fail(`skills/${g.skill}: ${size} bytes exceeds ${config.limits.guidelineMaxBytes}; .claude/rules load it whole, so split or trim it`);
 }
 
 const claude = json('plugins/agents/.claude-plugin/plugin.json');
@@ -51,7 +52,21 @@ const codexMarket = json('.agents/plugins/marketplace.json');
 if (claudeMarket.plugins[0]?.source !== './plugins/agents') fail('.claude-plugin/marketplace.json: source must be ./plugins/agents');
 if (codexMarket.plugins[0]?.source?.path !== './plugins/agents') fail('.agents/plugins/marketplace.json: source.path must be ./plugins/agents');
 if (claudeMarket.name !== codexMarket.name) fail('marketplace names differ between Claude and Codex');
-try { json('plugins/agents/hooks/hooks.json'); } catch (e) { fail(`hooks.json: ${e.message}`); }
+
+// No hooks: they fired only for some tools and needed per-machine trust in Codex. Checks belong in projects' Make targets, git hooks and CI.
+if (fs.existsSync(path.join(plugin, 'hooks')) || codex.hooks || claude.hooks) fail('the plugin must not ship hooks');
+
+// Compliance reviewer: a Claude plugin agent and a Codex agent file (Codex plugins cannot ship agents), both read-only wrappers of the skill.
+const reviewerMd = read('plugins/agents/agents/compliance-reviewer.md');
+const agentFm = reviewerMd.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? '';
+if (!/^name: compliance-reviewer$/m.test(agentFm) || !/^description: \S/m.test(agentFm)) fail('agents/compliance-reviewer.md: needs name and description');
+const agentTools = agentFm.match(/^tools: (.+)$/m)?.[1].split(',').map(t => t.trim()) ?? [];
+if (!agentTools.includes('Skill') || agentTools.some(t => ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'].includes(t))) fail('agents/compliance-reviewer.md: tools must include Skill and no editing tools');
+if (!reviewerMd.includes('agents:compliance-review')) fail('agents/compliance-reviewer.md: must load the agents:compliance-review skill');
+const reviewerToml = read('plugins/agents/codex/agents/compliance-reviewer.toml');
+for (const key of ['name', 'description', 'developer_instructions']) if (!new RegExp(`^${key} = `, 'm').test(reviewerToml)) fail(`codex/agents/compliance-reviewer.toml: missing ${key}`);
+if (!reviewerToml.includes('compliance-review skill')) fail('codex/agents/compliance-reviewer.toml: must use the compliance-review skill');
+if (!skills.includes('compliance-review')) fail('skills/compliance-review is missing');
 
 // Docs: every doc is indexed, names its rules skill, and every relative link in skills/docs resolves.
 const walk = dir => fs.readdirSync(dir, {withFileTypes: true}).flatMap(e => e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]);
@@ -85,13 +100,11 @@ for (const doc of ['AGENTS.md', 'README.md']) {
   for (const skill of skills) if (!text.includes(`\`${skill}\``)) fail(`${doc}: does not mention skill \`${skill}\``);
 }
 
-const tests = spawnSync(process.execPath, ['--test', path.join(root, 'scripts/guidelines.test.mjs')], {stdio: 'inherit'});
-if (tests.status !== 0) fail('hook tests failed');
-const sh = spawnSync('bash', ['-n', path.join(plugin, 'hooks/inject-subagent-skills.sh'), path.join(root, 'install.sh')], {stdio: 'inherit'});
+const sh = spawnSync('bash', ['-n', path.join(root, 'install.sh')], {stdio: 'inherit'});
 if (sh.status !== 0) fail('shell syntax check failed');
 
 if (problems.length) {
   console.error(problems.map(p => `check: ${p}`).join('\n'));
   process.exit(1);
 }
-console.log(`check: OK (${skills.length} skills, ${config.guidelines.length} path-delivered)`);
+console.log(`check: OK (${skills.length} skills, ${config.guidelines.length} path-scoped)`);

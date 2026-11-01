@@ -4,38 +4,38 @@ One plugin (`plugins/agents`) published through two marketplaces: Claude Code (`
 
 ## Commands
 
-- `node scripts/check.mjs`: frontmatter, manifests, mapping, skill and doc links, docs index, docs coverage, hook tests, shell syntax. Run before every commit.
+- `node scripts/check.mjs`: frontmatter, manifests, path scopes, no hooks, reviewer agents, skill and doc links, docs index, docs coverage, shell syntax. Run before every commit.
 - `claude plugin validate .`: Claude marketplace and plugin schema.
-- `./install.sh --target <dir> [--claude-rules]`: fallback installer; try it in a scratch directory.
+- `./install.sh --target <dir> [--claude-rules]`: fallback installer; try it in a scratch directory. `./install.sh --codex-agents` installs the Codex reviewer into `~/.codex/agents`.
 
 ## Hard rules
 
 - Skill frontmatter has exactly `name` (equal to the directory) and a one-line `description`. Quote the description if it contains `: `. Agents pick skills by description, so say when to use the skill.
 - Keep skill paths stable. Other repositories link to `plugins/agents/skills/<name>/SKILL.md`.
 - Skills hold rules and procedures; knowledge goes in `plugins/agents/docs/`: rationale, diagrams, long examples, reference layouts, and setup-specific facts. A skill links to its docs with `../../docs/<file>`. One concept per doc; frontmatter has `summary`, `rules` (the skill it explains) and `updated`; list every doc in `docs/README.md`. Keep each fact in one place: platform skills add specifics and never restate general rules (for example, `cicd-github` builds on `cicd-general`).
-- Must-follow content goes in `guidelines.json`, with path globs and an optional prompt regex, so hooks deliver it. "MUST USE" in a description is not enough. Procedures stay as plain skills.
-- A mapped skill is injected whole: keep it under the limit in guidelines.json (10 KiB) and move explanations and long examples to docs.
+- No hooks. They fired only for some tools (shell edits bypassed them) and Codex needed per-machine trust. Rules reach agents through skill descriptions and project instructions; compliance is checked by the `compliance-review` skill run in a fresh reviewer agent at the end of a task; enforcement belongs in each project's Make targets, git hooks and CI.
+- Must-follow skills get path globs in `guidelines.json`. The reviewer uses them to pick the skills that apply to a change, and `install.sh --claude-rules` turns them into `.claude/rules`. Such a skill is loaded whole: keep it under the limit in guidelines.json (10 KiB) and move explanations and long examples to docs.
+- The reviewer exists twice as thin wrappers of the skill: `plugins/agents/agents/compliance-reviewer.md` (Claude plugin agent, no editing tools) and `plugins/agents/codex/agents/compliance-reviewer.toml` (Codex plugins cannot ship agents; installed with `install.sh --codex-agents`). Change the procedure only in the skill.
 - Keep `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` in sync (name, version, description). Bump the version for every release; both agents cache plugins by version.
-- Hooks use only node/bash standard tooling, never block, and fail silently. They run in every project for every tool call.
 - No build artifacts, lock files, or binaries.
 
 ## Skills
 
-Delivered by path or prompt: `code-general`, `code-general-testing`, `code-golang-conventions`, `code-golang-testing`, `code-golang-lint`, `code-golang-docker`, `cicd-github`, `cicd-general`, `code-general-documentation`.
+Must-follow, path-scoped in guidelines.json: `code-general`, `code-general-testing`, `code-golang-conventions`, `code-golang-testing`, `code-golang-lint`, `code-golang-docker`, `cicd-github`, `cicd-general`, `code-general-documentation`.
 
-On demand: `code-general-optimisation`, `code-golang-optimisation`, `contribute-cli`.
+On demand: `code-general-optimisation`, `code-golang-optimisation`, `contribute-cli`, `compliance-review` (through the reviewer agents).
 
 ## Adding or changing a skill
 
 1. Create or edit `plugins/agents/skills/<name>/SKILL.md`. Put background and long examples in a doc under `plugins/agents/docs/` and link it. Claude and Codex both discover skills from the directory, so there is no manifest list to update.
-2. If it must always apply to certain files, add an entry to `guidelines.json` and a test case in `scripts/guidelines.test.mjs`.
+2. If it must always apply to certain files, add an entry with path globs to `guidelines.json`, and say in the description which files it covers so agents load it.
 3. Add it to the skill lists in this file and README.md (check.mjs enforces this), bump the version in both plugin manifests, then run `node scripts/check.mjs`.
 4. After a recurring agent mistake, prefer in order: a linter or test in the project; a sharper rule with a bad/good example here; a new skill.
 5. Follow the `contribute-cli` skill for branch naming and PR format.
 
 ## Release workflow
 
-**Every PR that changes plugin content MUST bump the version.** Without a version bump, installed plugins will not receive the update — both agents cache plugins by version, and Claude Code only refreshes when `version` in the manifest changes. Skills, docs and hooks are auto-discovered, but they still need a bump to ship.
+**Every PR that changes plugin content MUST bump the version.** Without a version bump, installed plugins will not receive the update — both agents cache plugins by version, and Claude Code only refreshes when `version` in the manifest changes. Skills, docs and agents are auto-discovered, but they still need a bump to ship.
 
 Files to bump together (keep them in sync; `scripts/check.mjs` fails otherwise):
 
