@@ -1,7 +1,7 @@
 ---
 summary: Why CI and CD are split into devs' and ops' zones, and how an image flows from the dev registry to pre/prod.
 rules: ../../skills/cicd-general/SKILL.md
-updated: 2026-11-01
+updated: 2026-11-04
 ---
 
 # CI vs CD
@@ -52,6 +52,32 @@ Typical end-to-end flow for a prerelease:
    the dev registry, retags to `<preprod-registry>/<repo>:<sha>` and `:<tag>`, and deploys to pre/prod.
 
 The dev registry is always an intermediate artifact store. CD never rebuilds from source.
+
+## Without Docker images
+
+A static site has no image, so a CI run's artifact takes the dev registry's place. The split stays the same. In
+`ivanov-gv/cg-map`, CI holds read-only permissions and uploads the built site, and `cd-pages` downloads it by run ID,
+copies it into its own run, and publishes it. It never checks out the application or rebuilds. CD must check the source:
+
+- The run came from the expected workflow, concluded `success`, and came from the expected event. Environment-scoped
+  variables hold the event and the artifact name, so a test artifact can never be released.
+- A pushed run came from the default branch. A branch can widen its own copy of the workflow's push filter, so the filter
+  alone does not prove this.
+- No newer verified run exists, so that a slow older run cannot overwrite a newer deployment. Compare runs that hold an
+  artifact, not the head of the branch: a later docs-only merge must not stop a deployment. A deployment's own commit is
+  the branch head when CD ran, not the artifact's commit, so it cannot be used for this.
+
+The artifact's retention sets the rollback window: rerun CD by hand with an older run ID.
+
+A calling workflow is not a split: if CI calls CD, it is one run, and CI must grant the deployment permissions. Use a
+separate run. Starting it automatically after CI, with `workflow_run`, is an exception to "triggered by a release or
+manual trigger" that needs the owner's approval. `workflow_run` runs only from the default branch, so only a real merge
+proves it. The merge that removes the old workflows can already deploy this way, so treat it as a production release.
+
+GitHub records a deployment for any job that names an environment, even if the job publishes nothing. In `cg-map`, a
+preparation job read its variables from the production environment, so a docs merge showed as a successful deployment
+of a commit that was never published. Let only the publishing job name that environment, and do not trust the
+deployment history until it does.
 
 ## Example: GitHub + GHCR + Google Cloud
 
