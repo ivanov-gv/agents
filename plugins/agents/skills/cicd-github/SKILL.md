@@ -8,7 +8,8 @@ description: GitHub Actions specifics for workflows in .github/workflows and com
 These add GitHub specifics to `cicd-general`, which also applies. Examples and background:
 [example workflow](../../docs/cicd/github-example-workflow.md),
 [outputs in test-run pairs](../../docs/cicd/github-test-run-outputs.md), [env blocks](../../docs/cicd/env-blocks.md),
-[local testing](../../docs/cicd/github-local-testing.md), [CI vs CD with GHCR](../../docs/cicd/ci-vs-cd.md#example-github--ghcr--google-cloud).
+[local testing](../../docs/cicd/github-local-testing.md), [CI vs CD with GHCR](../../docs/cicd/ci-vs-cd.md#example-github--ghcr--google-cloud),
+[monorepo pipelines](../../docs/cicd/github-monorepo.md).
 
 ## Every workflow
 
@@ -33,6 +34,23 @@ These add GitHub specifics to `cicd-general`, which also applies. Examples and b
   sibling directly, copy the `env:` section, and keep the steps anchor. Details:
   [outputs in test-run pairs](../../docs/cicd/github-test-run-outputs.md).
 
+- When a platform step cannot be pointed at a test target, such as `actions/deploy-pages`, ask the owner. A dummy twin
+  that logs what production would do is an allowed exception once the owner approves it. Record it in a workflow comment
+  with when to revisit it. Details: [test-run model](../../docs/cicd/test-run-model.md#when-a-step-has-no-test-destination).
+
+## Monorepos and required checks
+
+1. Use one top-level workflow calling one `ci-<folder>.yml` per folder. Workflows cannot live in subfolders. Called
+   workflows take `test_run` as an input and hold the twins.
+2. Require one gate job in the top-level workflow, with `if: always()`, depending on every job. It fails on `failure` and
+   `cancelled`, and has no twin: a skipped gate counts as passed. Do not use `paths` filters on a required workflow.
+3. Select work with a tested planner script that selects everything for anything it cannot classify, and run everything
+   before deploying.
+4. Do not share a concurrency group between runs on the default branch: GitHub drops older pending runs in a group.
+5. A change to `.github/**` must pass a test run locally and on GitHub. Enforce the GitHub run with a PR-only check.
+
+Details and examples: [monorepo pipelines](../../docs/cicd/github-monorepo.md).
+
 ## Actions
 
 1. Use composite actions (`.github/actions/`) to abstract away similar steps across workflows. Do not copy-paste steps,
@@ -42,6 +60,8 @@ These add GitHub specifics to `cicd-general`, which also applies. Examples and b
    with `nektos/act`.
 4. Must use workflow commands (`::error...`, `::warning...`, `::debug...`, `::group...`, etc.) to simplify understanding
    of what happened during the step.
+5. A step that pipes a command needs an explicit `shell: bash`. The default has no `pipefail`, so a failed API call piped
+   into `jq` looks like an empty, normal result.
 
 ## Local runs and linting
 
@@ -61,3 +81,5 @@ Examples: [local testing and linting](../../docs/cicd/github-local-testing.md).
 - CD pulls only images under the `ghcr.io/${{ github.repository }}` prefix, with the triggering release tag or commit
   SHA.
 - CD workflows are triggered by `release` or `workflow_dispatch` events.
+- Without images, a CI run's artifact takes the dev registry's place. Details:
+  [CI vs CD](../../docs/cicd/ci-vs-cd.md#without-docker-images).
