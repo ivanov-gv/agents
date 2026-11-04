@@ -72,7 +72,12 @@ The artifact's retention sets the rollback window: rerun CD by hand with an olde
 A calling workflow is not a split: if CI calls CD, it is one run, and CI must grant the deployment permissions. Use a
 separate run. Starting it automatically after CI, with `workflow_run`, is an exception to "triggered by a release or
 manual trigger" that needs the owner's approval. `workflow_run` runs only from the default branch, so only a real merge
-proves it.
+proves it. The merge that removes the old workflows can already deploy this way, so treat it as a production release.
+
+GitHub records a deployment for any job that names an environment, even if the job publishes nothing. In `cg-map`, a
+preparation job read its variables from the production environment, so a docs merge showed as a successful deployment
+of a commit that was never published. Let only the publishing job name that environment, and do not trust the
+deployment history until it does.
 
 ## Example: GitHub + GHCR + Google Cloud
 

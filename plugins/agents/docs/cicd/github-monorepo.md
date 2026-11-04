@@ -69,7 +69,9 @@ gate:
 - Add drift tests: every component needs a rule, and folder checks together must cover the full local check.
 - Over-select cheap checks. Narrow only what is slow, such as browser tests, and only by area, never by test. Replay the
   commit history through the planner first: it shows how much a rule would really save.
-- Run everything before deploying and nightly, so a wrong mapping cannot reach users.
+- Run a selected folder's full suite before deploying, and everything nightly, so a wrong mapping cannot reach users.
+- Run assertions about docs in the docs job. A docs-only PR must never select a code pipeline, not even for a test that
+  reads the root `AGENTS.md`.
 
 ## Concurrency
 
@@ -83,6 +85,13 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 ```
 
+The same limit applies to CD. Every default-branch CI run starts the CD workflow, so a group on the whole workflow lets a
+docs merge replace a pending web deployment. Put the group on the job that publishes, so that only real deployments
+queue.
+
+A cancelled run keeps its checks on the commit. A failed row can sit beside the newer run's passing gate, so read the
+gate, not the list.
+
 ## Proving workflow changes
 
 Running a workflow is the only way to know it works, so a change to `.github/**` does not need to run every folder on its
@@ -95,6 +104,9 @@ PR. It must pass a test run instead, locally and on GitHub:
 - A workflow not yet on the default branch cannot be dispatched, so only a 404 from looking it up may pass. Any other API
   error must fail.
 - CI cannot see local runs, so record them in the PR template.
+
+An open PR keeps its old workflows until a new event, such as updating its branch. Re-running it reuses the old ones. To
+test a cutover, update an open PR of the kind it should speed up.
 
 ## Dependencies in CI: cache or image
 

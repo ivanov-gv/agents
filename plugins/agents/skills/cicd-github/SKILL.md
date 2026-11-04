@@ -46,7 +46,8 @@ These add GitHub specifics to `cicd-general`, which also applies. Examples and b
    `cancelled`, and has no twin: a skipped gate counts as passed. Do not use `paths` filters on a required workflow.
 3. Select work with a tested planner script that selects everything for anything it cannot classify, and run everything
    before deploying.
-4. Do not share a concurrency group between runs on the default branch: GitHub drops older pending runs in a group.
+4. Do not share a concurrency group between runs on the default branch: GitHub drops older pending runs in a group. In
+   CD, put the group on the job that publishes.
 5. A change to `.github/**` must pass a test run locally and on GitHub. Enforce the GitHub run with a PR-only check.
 
 Details and examples: [monorepo pipelines](../../docs/cicd/github-monorepo.md).
