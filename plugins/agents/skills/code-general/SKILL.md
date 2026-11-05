@@ -7,6 +7,33 @@ description: Read before doing any coding related tasks like editing, writing, r
 
 # Make it readable
 
+## Make the meaning clear through names
+
+A name carries the meaning of the code. If the reader needs the surrounding code or the author to know what a name
+means, the meaning is hidden and the name is wrong.
+
+- Name the concept at the level the code works at. Shared code uses the general idea; a concrete case appears only where
+  the code depends on it. Test: if another kind were added, would this name become wrong?
+- Never use two words to encode a difference. State the difference in the name.
+
+<bad-example>
+
+```go
+// shared tracker: a "vehicle" is the current position, a "bus" the remembered one
+func matchVehiclesToPreviousBuses(vehicles []Vehicle) map[int]busMatch
+```
+
+</bad-example>
+
+<good-example>
+
+```go
+// shared tracker: "bus" would be wrong as soon as trains are added
+func matchToPreviousVehicles(vehicles []Vehicle) map[int]vehicleMatch
+```
+
+</good-example>
+
 ## Break complex expressions into named local variables
 
 Avoid chaining operations or nesting calls when the result has a meaningful name. Each intermediate variable should
