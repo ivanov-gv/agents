@@ -1,6 +1,6 @@
 ---
 name: cicd-general
-description: "Platform-neutral CI/CD rules: three ways to run every pipeline, test-run mode, job-scoped env vars, CI vs CD zones. Use when writing, editing or reviewing any pipeline (GitHub Actions, GitLab CI, Jenkins, etc.)."
+description: "Platform-neutral CI/CD rules: three ways to run every pipeline, test-run mode, job-scoped env vars, CI vs CD zones, artifact identity, registry retention. Use when writing, editing or reviewing any pipeline (GitHub Actions, GitLab CI, Jenkins, etc.)."
 ---
 
 # CI/CD pipeline rules
@@ -33,13 +33,15 @@ Rules for CI/CD pipelines and reusable components on any platform. Platform skil
   layer.
 - A step that "actually runs" in test-run mode is fine as long as its destination comes from environment-scoped secrets
   or vars. Never add step-level conditions that skip steps in test-run mode; that defeats exercising the same code path.
+- CI takes a `commit` input so any commit can be built in test-run mode.
+- Every CD path must run for real before merge: locally and in a test-run dispatch.
 
 ## CI and CD zones
 
 Workflows are strictly divided into CI and CD parts (devs' and ops' zones):
 
-1. CI workflows run checks and build Docker images to dev registry only.
-2. CD workflows pull the CI-built image from the dev registry, retag it and pull into the pre / prod registry.
+1. CI workflows run checks and build artifacts to dev registry only.
+2. CD workflows pull the CI-built artifact from the dev registry, retag it and pull into the pre / prod registry.
 3. CI and the dev registry are parts of devs' responsibility zone. It never touches pre/prod environments or
    registries.
 4. CD and the pre/prod registry are parts of ops' responsibility zone. It never writes to dev registry, only reads
@@ -59,11 +61,35 @@ CD workflows:
 3. Must not be triggered by a push event of any kind, including tags.
 4. Must use a pre/production environment in default mode.
 5. Must not use a pre/production environment in test-run mode, only test-run environment.
-6. Must only pull Docker images from the dev registry, never push to the dev registry.
-7. Must only pull Docker images from the dev registry with tags related to the release it was triggered by – either the
-   release tag or commit SHA.
-8. Must never use dev registry directly to push to pre/production environments. Must always create a copy of the image
-   in the environment it deploys to.
-9. Must never delete any image from pre/production environments.
+6. Must only pull artifacts from the dev registry, never push to the dev registry.
+7. Must only pull artifacts from the dev registry tagged with the release it was triggered by: the release tag or the commit SHA.
+8. Must never use dev registry directly to push to pre/production environments. Must always create a copy of the
+   artifact in the environment it deploys to.
+9. Must never delete any artifact from pre/production environments.
 10. Must never touch any source code. Only pull release-ready artifacts.
 11. Must never rebuild from source; the dev registry is always the intermediate artifact store.
+
+## Artifact identity
+
+- The commit SHA is the identity of every deliverable — images, static sites, bundles, anything CI publishes.
+- CI publishes every deliverable to the dev registry tagged with the full commit SHA.
+- Non-image artifacts are packaged as OCI images so they are addressable by commit.
+- Run-scoped CI artifacts (e.g. GitHub Actions artifacts) are not deliverables: CD cannot address them by commit.
+
+## CD smell test
+
+- A CD job is "pull by SHA → copy into the target → deploy". Nothing else.
+- If CD needs a lookup, a script, polling, a run ID, or a "newest?" check to find what to deploy, the artifact is not
+  versioned properly. Fix the versioning, not CD.
+
+## Eventual consistency
+
+- Every version deploys when it is built. The last one wins.
+- Do not add ordering or freshness logic to CD.
+
+## Registry retention
+
+- Retention belongs to the registry, not to CD logic.
+- The test-run registry is ephemeral (e.g. `ttl.sh`).
+- The dev registry uses count-based cleanup.
+- Rollback means deploying an older SHA.

@@ -1,7 +1,7 @@
 ---
 summary: How one workflow runs identical steps in production and test-run mode, and why it is safe.
 rules: ../../skills/cicd-general/SKILL.md
-updated: 2026-11-01
+updated: 2026-11-04
 ---
 
 # Test-run model
@@ -86,4 +86,17 @@ share the same steps and envs list, but the default one needs to reference `need
 test-run one needs to reference `needs.previous-job-test-run.outputs`. For the GitHub Actions workaround, see
 [outputs in test-run pairs](github-test-run-outputs.md).
 
-A complete workflow using this model: [example GitHub workflow](github-example-workflow.md).
+## When a step has no test destination
+
+The model needs a test target for each destination, and some platform steps have none: `actions/deploy-pages` always
+publishes to the repository it runs in. With read-only permissions it can only fail, and creating a second site only for
+testing can cost more than it saves. The options are:
+
+- Publish through a mechanism with a configurable target, such as pushing to a branch of a test repository. This fully
+  follows the model, but needs a second repository and a long-lived deploy key.
+- With the owner's approval, make the twin a dummy that logs what production would publish: the artifact, digest, source
+  run, and target. Keep real twins for every earlier job. The publish step is then first exercised on a real merge, so
+  record the exception and when to revisit it, such as moving to another provider.
+
+A complete workflow using this model: [example GitHub workflow](github-example-workflow.md). In a monorepo:
+[monorepo pipelines](github-monorepo.md).
