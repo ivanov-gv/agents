@@ -192,6 +192,52 @@ func GoodFunction(user User, data []int) error { // A good example:
 - Use generics for reusable utility functions operating on maps/slices (see `internal/utils/`). Also use generic
   functions in service code when the pattern is clear (e.g. `GetMessage[T any](map, key) T`).
 - Define interfaces at the consumer side, not the provider side.
+- Hold a mutex only inside a small method: `Lock()`, `defer Unlock()` on the next line, and no waiting on the network, a
+  channel or another lock. Manual unlocks across branches leave the mutex held after a panic and are easy to miss on one
+  path:
+
+<bad-example>
+
+```go
+func (f *Feed) Current() Snapshot {
+	f.mutex.Lock()
+	if f.cached != nil {
+		cached := f.cached
+		f.mutex.Unlock()
+		return *cached
+	}
+	refresh := f.startRefreshLocked()
+	f.mutex.Unlock()
+	<-refresh.done
+	return *refresh.result
+}
+```
+
+</bad-example>
+
+<good-example>
+
+```go
+func (f *Feed) Current() Snapshot {
+	cached, refresh := f.cachedOrRefresh()
+	if cached != nil {
+		return *cached
+	}
+	<-refresh.done
+	return *refresh.result
+}
+
+func (f *Feed) cachedOrRefresh() (*Snapshot, *refreshCall) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	if f.cached != nil {
+		return f.cached, nil
+	}
+	return nil, f.startRefreshLocked()
+}
+```
+
+</good-example>
 
 ## Error handling
 

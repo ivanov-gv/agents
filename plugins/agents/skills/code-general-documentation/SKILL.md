@@ -41,19 +41,31 @@ The root AGENTS.md is a short map, about 60–100 lines:
 Rules:
 
 - Do not put general, cross-project conventions in project instructions. Personal conventions come from this plugin;
-  project language rules live in `docs/engineering/<lang>.md` and are delivered by path (Claude `.claude/rules` with
-  `paths`, nested AGENTS.md for Codex). Do not add agent hooks; check compliance with a reviewer agent and enforce with
-  linters, git hooks and CI.
-- Add a nested AGENTS.md only where a directory needs different rules. Codex loads the chain from the root to its
-  startup directory once, within a shared 32 KiB budget, so keep every file in the chain small.
+  project language rules live in `docs/engineering/<lang>.md`. Claude gets them through `.claude/rules` with `paths`;
+  Codex through links from the root AGENTS.md. Do not add agent hooks; check compliance with a reviewer agent and
+  enforce with linters, git hooks and CI.
+- Never copy a rule into nested AGENTS.md files. A session started in a subdirectory still loads the root file, so a
+  rule for the whole repository goes there as one summary line and a link. State it once. A nested AGENTS.md holds only
+  what is different about that directory; add one only when something is. No import or "see the root" line is needed.
+- A link is not delivery: Codex sees the text only if the agent opens it. Inline what must always hold in the hard
+  rules, within the size limit, or make it a check.
 - Prefer enforcement over prose: if a rule can be a linter, test, or CI check, make it one and delete the sentence.
 - Write instructions by hand. Do not generate AGENTS.md wholesale with an LLM.
 - Be concise — every line consumes context window. Prefer terse rules to verbose explanations.
 - Be prescriptive — write rules the agent can follow mechanically ("use X", "never do Y"), not vague advice
   ("consider using X").
 - Include code examples for patterns that are hard to describe in words.
-- Do not repeat information that is obvious from the code itself (e.g. listing every file).
-- Keep one source for each rule; generate agent-specific copies and check them for drift instead of copying by hand.
+- Do not repeat information that is obvious from the code itself (e.g. listing every file). Inner directory layouts and
+  vocabulary belong in the README or the code; a suppression policy belongs in the linter's config.
+- Add a line only if an agent would get something wrong without it and no check catches it. If one rule change touches
+  several AGENTS.md files, the rule is in the wrong place.
+- Keep one source for each rule. Generate a copy only when a tool requires its own format (`paths` frontmatter), check
+  it for drift, and never generate into AGENTS.md. Do not write metadata nothing reads, such as content hashes.
+- A new rule replaces what it contradicts: search the existing guidelines and fix the older wording in the same change.
+- Say exactly what enforces a rule: name the check and what it misses. A rule only a reviewer reads is reviewed, not
+  enforced.
+- Verify loading instead of assuming it: run `codex debug prompt-input` from a subdirectory; Claude Code reports
+  `AGENTS.md loaded: …` at session start.
 - Never commit `AGENTS.override.md` or personal settings (`CLAUDE.local.md`, `.claude/settings.local.json`).
 
 ## docs/ (knowledge)
