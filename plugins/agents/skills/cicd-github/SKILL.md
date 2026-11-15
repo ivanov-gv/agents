@@ -8,7 +8,8 @@ description: GitHub Actions specifics for workflows in .github/workflows and com
 These add GitHub specifics to `cicd-general`, which also applies. Examples and background:
 [example workflow](../../docs/cicd/github-example-workflow.md),
 [outputs in test-run pairs](../../docs/cicd/github-test-run-outputs.md), [env blocks](../../docs/cicd/env-blocks.md),
-[local testing](../../docs/cicd/github-local-testing.md), [CI vs CD with GHCR](../../docs/cicd/ci-vs-cd.md#example-github--ghcr--google-cloud).
+[local testing](../../docs/cicd/github-local-testing.md), [CI vs CD with GHCR](../../docs/cicd/ci-vs-cd.md#example-github--ghcr--google-cloud),
+[monorepo pipelines](../../docs/cicd/github-monorepo.md).
 
 ## Every workflow
 
@@ -33,6 +34,24 @@ These add GitHub specifics to `cicd-general`, which also applies. Examples and b
   sibling directly, copy the `env:` section, and keep the steps anchor. Details:
   [outputs in test-run pairs](../../docs/cicd/github-test-run-outputs.md).
 
+- When a platform step cannot be pointed at a test target, such as `actions/deploy-pages`, ask the owner. A dummy twin
+  that logs what production would do is an allowed exception once the owner approves it. Record it in a workflow comment
+  with when to revisit it. Details: [test-run model](../../docs/cicd/test-run-model.md#when-a-step-has-no-test-destination).
+
+## Monorepos and required checks
+
+1. Use one top-level workflow calling one `ci-<folder>.yml` per folder. Workflows cannot live in subfolders. Called
+   workflows take `test_run` as an input and hold the twins.
+2. Require one gate job in the top-level workflow, with `if: always()`, depending on every job. It fails on `failure` and
+   `cancelled`, and has no twin: a skipped gate counts as passed. Do not use `paths` filters on a required workflow.
+3. Select work with a tested planner script that selects everything for anything it cannot classify, and run everything
+   before deploying.
+4. Do not share a concurrency group between runs on the default branch: GitHub drops older pending runs in a group. In
+   CD, put the group on the job that publishes.
+5. A change to `.github/**` must pass a test run locally and on GitHub. Enforce the GitHub run with a PR-only check.
+
+Details and examples: [monorepo pipelines](../../docs/cicd/github-monorepo.md).
+
 ## Actions
 
 1. Use composite actions (`.github/actions/`) to abstract away similar steps across workflows. Do not copy-paste steps,
@@ -42,6 +61,8 @@ These add GitHub specifics to `cicd-general`, which also applies. Examples and b
    with `nektos/act`.
 4. Must use workflow commands (`::error...`, `::warning...`, `::debug...`, `::group...`, etc.) to simplify understanding
    of what happened during the step.
+5. A step that pipes a command needs an explicit `shell: bash`. The default has no `pipefail`, so a failed API call piped
+   into `jq` looks like an empty, normal result.
 
 ## Local runs and linting
 
@@ -56,8 +77,23 @@ Examples: [local testing and linting](../../docs/cicd/github-local-testing.md).
 
 ## Registries
 
-- GHCR is the dev registry. `ghcr.io/${{ github.repository }}:${{ github.tag }}` is a production-grade image ready to be
-  deployed.
-- CD pulls only images under the `ghcr.io/${{ github.repository }}` prefix, with the triggering release tag or commit
-  SHA.
+- GHCR is the dev registry. `ghcr.io/${{ github.repository }}:${{ github.sha }}` is a production-grade artifact ready
+  to be deployed.
+- CD pulls only artifacts under the `ghcr.io/${{ github.repository }}` prefix, tagged with the release tag or the commit SHA.
 - CD workflows are triggered by `release` or `workflow_dispatch` events.
+- Non-image artifacts are packaged as OCI images in GHCR. Details:
+  [CI vs CD](../../docs/cicd/ci-vs-cd.md#static-site-as-an-oci-artifact--worked-example).
+
+## Acknowledgement exception
+
+- Where the platform has no release event for a dev environment (GitHub Pages), CD may start on CI's completion with
+  `workflow_run`.
+- Filter the event, `head_branch`, and `conclusion`: only successful builds of the default branch triggered by push.
+- Never trigger CD for test runs or other runs.
+- Record the exception in the project's ADR. The owner must approve it.
+- Polling is never the answer.
+
+## GHCR retention
+
+- GHCR has no time-based retention. Use `actions/delete-package-versions` with `min-versions-to-keep` in a scheduled
+  workflow, or right after each publish, for count-based cleanup.
