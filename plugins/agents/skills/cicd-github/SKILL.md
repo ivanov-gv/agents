@@ -79,7 +79,7 @@ Examples: [local testing and linting](../../docs/cicd/github-local-testing.md).
 
 - GHCR is the dev registry. `ghcr.io/${{ github.repository }}:${{ github.sha }}` is a production-grade artifact ready
   to be deployed.
-- CD pulls only artifacts under the `ghcr.io/${{ github.repository }}` prefix, tagged with the commit SHA.
+- CD pulls only artifacts under the `ghcr.io/${{ github.repository }}` prefix, tagged with the release tag or the commit SHA.
 - CD workflows are triggered by `release` or `workflow_dispatch` events.
 - Non-image artifacts are packaged as OCI images in GHCR. Details:
   [CI vs CD](../../docs/cicd/ci-vs-cd.md#static-site-as-an-oci-artifact--worked-example).
@@ -96,4 +96,4 @@ Examples: [local testing and linting](../../docs/cicd/github-local-testing.md).
 ## GHCR retention
 
 - GHCR has no time-based retention. Use `actions/delete-package-versions` with `min-versions-to-keep` in a scheduled
-  workflow for count-based cleanup.
+  workflow, or right after each publish, for count-based cleanup.

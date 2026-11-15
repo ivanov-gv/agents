@@ -34,7 +34,7 @@ Rules for CI/CD pipelines and reusable components on any platform. Platform skil
 - A step that "actually runs" in test-run mode is fine as long as its destination comes from environment-scoped secrets
   or vars. Never add step-level conditions that skip steps in test-run mode; that defeats exercising the same code path.
 - CI takes a `commit` input so any commit can be built in test-run mode.
-- Every CD path must run for real before merge — locally, via test-run dispatch, and in the default production run.
+- Every CD path must run for real before merge: locally and in a test-run dispatch.
 
 ## CI and CD zones
 
@@ -62,7 +62,7 @@ CD workflows:
 4. Must use a pre/production environment in default mode.
 5. Must not use a pre/production environment in test-run mode, only test-run environment.
 6. Must only pull artifacts from the dev registry, never push to the dev registry.
-7. Must only pull artifacts from the dev registry tagged with the commit SHA.
+7. Must only pull artifacts from the dev registry tagged with the release it was triggered by: the release tag or the commit SHA.
 8. Must never use dev registry directly to push to pre/production environments. Must always create a copy of the
    artifact in the environment it deploys to.
 9. Must never delete any artifact from pre/production environments.
