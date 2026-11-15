@@ -77,10 +77,23 @@ Examples: [local testing and linting](../../docs/cicd/github-local-testing.md).
 
 ## Registries
 
-- GHCR is the dev registry. `ghcr.io/${{ github.repository }}:${{ github.tag }}` is a production-grade image ready to be
-  deployed.
-- CD pulls only images under the `ghcr.io/${{ github.repository }}` prefix, with the triggering release tag or commit
-  SHA.
+- GHCR is the dev registry. `ghcr.io/${{ github.repository }}:${{ github.sha }}` is a production-grade artifact ready
+  to be deployed.
+- CD pulls only artifacts under the `ghcr.io/${{ github.repository }}` prefix, tagged with the commit SHA.
 - CD workflows are triggered by `release` or `workflow_dispatch` events.
-- Without images, a CI run's artifact takes the dev registry's place. Details:
-  [CI vs CD](../../docs/cicd/ci-vs-cd.md#without-docker-images).
+- Non-image artifacts are packaged as OCI images in GHCR. Details:
+  [CI vs CD](../../docs/cicd/ci-vs-cd.md#static-site-as-an-oci-artifact--worked-example).
+
+## Acknowledgement exception
+
+- Where the platform has no release event for a dev environment (GitHub Pages), CD may start on CI's completion with
+  `workflow_run`.
+- Filter the event, `head_branch`, and `conclusion`: only successful builds of the default branch triggered by push.
+- Never trigger CD for test runs or other runs.
+- Record the exception in the project's ADR. The owner must approve it.
+- Polling is never the answer.
+
+## GHCR retention
+
+- GHCR has no time-based retention. Use `actions/delete-package-versions` with `min-versions-to-keep` in a scheduled
+  workflow for count-based cleanup.

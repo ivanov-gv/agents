@@ -1,7 +1,7 @@
 ---
-summary: Why CI and CD are split into devs' and ops' zones, and how an image flows from the dev registry to pre/prod.
+summary: Why CI and CD are split into devs' and ops' zones, how artifacts flow from the dev registry to pre/prod, and a worked example for static sites as OCI artifacts.
 rules: ../../skills/cicd-general/SKILL.md
-updated: 2026-11-04
+updated: 2026-11-15
 ---
 
 # CI vs CD
@@ -53,31 +53,49 @@ Typical end-to-end flow for a prerelease:
 
 The dev registry is always an intermediate artifact store. CD never rebuilds from source.
 
-## Without Docker images
+## Static site as an OCI artifact — worked example
 
-A static site has no image, so a CI run's artifact takes the dev registry's place. The split stays the same. In
-`ivanov-gv/cg-map`, CI holds read-only permissions and uploads the built site, and `cd-pages` downloads it by run ID,
-copies it into its own run, and publishes it. It never checks out the application or rebuilds. CD must check the source:
+A static site has no Docker image, but the split is the same: CI publishes to the dev registry, CD pulls from it and
+deploys. The difference is packaging — the built site becomes an OCI image so it is addressable by commit SHA.
 
-- The run came from the expected workflow, concluded `success`, and came from the expected event. Environment-scoped
-  variables hold the event and the artifact name, so a test artifact can never be released.
-- A pushed run came from the default branch. A branch can widen its own copy of the workflow's push filter, so the filter
-  alone does not prove this.
-- No newer verified run exists, so that a slow older run cannot overwrite a newer deployment. Compare runs that hold an
-  artifact, not the head of the branch: a later docs-only merge must not stop a deployment. A deployment's own commit is
-  the branch head when CD ran, not the artifact's commit, so it cannot be used for this.
+**CI** (e.g. `ci-pages.yml`):
 
-The artifact's retention sets the rollback window: rerun CD by hand with an older run ID.
+1. Build the site into a directory.
+2. Package it as an OCI image (e.g. with `docker build` using a minimal `scratch` or `busybox` base, or with
+   `umoci`/`crane`).
+3. Push to the dev registry tagged with the full commit SHA:
+   `ghcr.io/ivanov-gv/cg-map:<sha>`.
+4. In test-run mode, push to `ttl.sh/<repo>:<sha>?ttl=24h` instead.
 
-A calling workflow is not a split: if CI calls CD, it is one run, and CI must grant the deployment permissions. Use a
-separate run. Starting it automatically after CI, with `workflow_run`, is an exception to "triggered by a release or
-manual trigger" that needs the owner's approval. `workflow_run` runs only from the default branch, so only a real merge
-proves it. The merge that removes the old workflows can already deploy this way, so treat it as a production release.
+**CD** (e.g. `cd-pages.yml`):
 
-GitHub records a deployment for any job that names an environment, even if the job publishes nothing. In `cg-map`, a
-preparation job read its variables from the production environment, so a docs merge showed as a successful deployment
-of a commit that was never published. Let only the publishing job name that environment, and do not trust the
-deployment history until it does.
+1. Pull the image by SHA: `ghcr.io/ivanov-gv/cg-map:<sha>`.
+2. Extract the files from the image layers.
+3. Publish to the target (e.g. GitHub Pages via `actions/deploy-pages`).
+
+No run IDs, no lookups, no polling. CD knows exactly what to deploy because the artifact is tagged by commit SHA.
+
+**Retention and cleanup:**
+
+- The test-run registry (`ttl.sh`) is ephemeral — images expire after the configured TTL.
+- The dev registry (GHCR) uses count-based cleanup via a scheduled workflow with `actions/delete-package-versions`
+  and `min-versions-to-keep`. GHCR has no time-based retention.
+- Rollback means deploying an older SHA. If the image is still in the registry, CD deploys it. If it was cleaned up,
+  rebuild from the older commit.
+
+**The `workflow_run` acknowledgement exception:**
+
+GitHub Pages has no release event, so CD cannot wait for one. Instead, `cd-pages` starts on CI's completion via
+`workflow_run`, filtered to:
+
+- Event: `push` (not `pull_request`, not `workflow_dispatch`).
+- `head_branch`: the default branch.
+- `conclusion`: `success`.
+
+This exception must be recorded in the project's ADR and approved by the owner. It never fires for test runs.
+
+GitHub records a deployment for any job that names an environment, even if the job publishes nothing. Let only the
+publishing job name the environment, and do not trust the deployment history until it does.
 
 ## Example: GitHub + GHCR + Google Cloud
 
