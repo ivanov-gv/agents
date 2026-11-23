@@ -16,3 +16,4 @@ skill whose rules it explains.
 | [golang/project-layout.md](golang/project-layout.md) | Go directories, file names, layers and request flow | `code-golang-conventions` |
 | [golang/service-runtime.md](golang/service-runtime.md) | Dockerfile stages, env configuration, `ENVIRONMENT` | `code-golang-docker` |
 | [agents/agent-instructions.md](agents/agent-instructions.md) | How Claude Code and Codex load instructions; knowledge vs rules vs procedures | `code-general-documentation` |
+| [agents/developer-subagents.md](agents/developer-subagents.md) | Developer subagents compared; incidents behind the lead's review rules | `developer-subagents` |

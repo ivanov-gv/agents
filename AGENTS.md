@@ -23,7 +23,7 @@ One plugin (`plugins/agents`) published through two marketplaces: Claude Code (`
 
 Must-follow, path-scoped in guidelines.json: `code-general`, `code-general-testing`, `code-golang-conventions`, `code-golang-testing`, `code-golang-lint`, `code-golang-docker`, `cicd-github`, `cicd-general`, `code-general-documentation`.
 
-On demand: `code-general-optimisation`, `code-golang-optimisation`, `contribute-cli`, `compliance-review` (through the reviewer agents).
+On demand: `code-general-optimisation`, `code-golang-optimisation`, `contribute-cli`, `compliance-review` (through the reviewer agents), `developer-subagents`.
 
 ## Adding or changing a skill
 

@@ -100,8 +100,11 @@ for (const doc of ['AGENTS.md', 'README.md']) {
   for (const skill of skills) if (!text.includes(`\`${skill}\``)) fail(`${doc}: does not mention skill \`${skill}\``);
 }
 
-const sh = spawnSync('bash', ['-n', path.join(root, 'install.sh')], {stdio: 'inherit'});
-if (sh.status !== 0) fail('shell syntax check failed');
+const shellScripts = [path.join(root, 'install.sh'), ...walk(path.join(plugin, 'skills')).filter(f => f.endsWith('.sh'))];
+for (const script of shellScripts) {
+  const sh = spawnSync('bash', ['-n', script], {stdio: 'inherit'});
+  if (sh.status !== 0) fail(`${path.relative(root, script)}: shell syntax check failed`);
+}
 
 if (problems.length) {
   console.error(problems.map(p => `check: ${p}`).join('\n'));
