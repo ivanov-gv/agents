@@ -62,9 +62,9 @@ CD workflows:
 4. Must use a pre/production environment in default mode.
 5. Must not use a pre/production environment in test-run mode, only test-run environment.
 6. Must only pull artifacts from the dev registry, never push to the dev registry.
-7. Must deploy to dev, staging and production only by an immutable identifier tied to exactly one source commit: the
-   release tag, the commit SHA, or another constant identifier of the release it was triggered by. Never by a moving
-   tag (`latest`, `main`, `dev`).
+7. Must deploy to dev, staging and production only by an identifier that is constant and tied to exactly one source
+   commit: a release, the commit SHA, a git tag, or another such identifier. Never by a moving tag (`latest`, `main`,
+   `dev`).
 8. In test-run mode, may resolve its source artifact through a moving tag, since it publishes only to an ephemeral test
    destination (for example `ttl.sh`). It must log the commit the tag resolved to, so the run shows what was tested.
 9. Must never use dev registry directly to push to pre/production environments. Must always create a copy of the

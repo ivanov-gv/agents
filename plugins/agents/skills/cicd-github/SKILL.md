@@ -22,6 +22,9 @@ These add GitHub specifics to `cicd-general`, which also applies. Examples and b
 4. Steps read those variables only via `${{ env.* }}` in `with:` and `run:`, never `secrets.*` or `vars.*` directly.
 5. Do not reference workflow-level `env:` from a job's `env:` block (`${{ env.GLOBAL_ENV_VAR }}`); the substitution does
    not work in `act`.
+6. Job outputs are strings. Compare one before passing it to a `type: boolean` input of a reusable workflow
+   (`${{ needs.plan.outputs.flag == 'true' }}`): GitHub rejects the call before any job starts, and actionlint cannot
+   see the output's type.
 
 ## Test-run pairs
 
@@ -63,10 +66,7 @@ Details and examples: [monorepo pipelines](../../docs/cicd/github-monorepo.md).
    of what happened during the step.
 5. A step that pipes a command needs an explicit `shell: bash`. The default has no `pipefail`, so a failed API call piped
    into `jq` looks like an empty, normal result.
-6. Job outputs are strings. Compare one before passing it to a `type: boolean` input of a reusable workflow
-   (`${{ needs.plan.outputs.flag == 'true' }}`): GitHub rejects the call before any job starts, and actionlint cannot
-   see the output's type.
-7. `gh api --paginate` writes one JSON document per page. Use `--slurp` for one array of pages, or `--jq` to filter each
+6. `gh api --paginate` writes one JSON document per page. Use `--slurp` for one array of pages, or `--jq` to filter each
    page, before parsing the result as one document.
 
 ## Local runs and linting

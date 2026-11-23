@@ -6,7 +6,8 @@ description: Lead a developer subagent (opencode, Junie) that writes the code wh
 # Developer subagents
 
 You are the team lead. The developer, another agent run from the shell, writes the code; you write the task, review the
-result by evidence, run the heavy checks, and merge. Measurements and incidents behind these rules:
+result by evidence, and run the heavy checks. Merge only where the owner allows it. Measurements and incidents behind
+these rules:
 [developer subagents](../../docs/agents/developer-subagents.md).
 
 ## Which developer
@@ -19,15 +20,17 @@ fast first pass that needs three rounds loses.
 2. **Another opencode model as a second opinion** on a risky change. Free models come and go: check `opencode models`
    first.
 3. **Junie (`junie-lite`): fallback only.** Every round starts cold, and it has silently dropped a required change.
-4. Re-measure on real work and keep your own record of the results.
+4. Avoid models that stopped without doing the task (`minimax-m3.1-flash-free`).
+5. Re-measure on real work and keep your own record of the results.
 
 ## How to run
 
 The runners in [scripts/](scripts/) prepend [developer-rules.md](developer-rules.md) to the task, write the log to
-`$AGENTS_LOG_DIR` (default `~/.agents/logs/<log-name>.log`) and print the exit status, duration and log tail.
+`$AGENTS_LOG_DIR/<log-name>.log` (default directory `~/.agents/logs`) and print the exit status, duration and log tail.
 
 - opencode: `scripts/run-opencode.sh <worktree> <model> <log-name> "<task>"` (`OPENCODE` overrides the binary path).
-  - A review round continues the same session: find it with `opencode session list` in the worktree, then
+  - opencode is often not on PATH (`~/.opencode/bin/opencode`). A review round continues the same session: find it
+    with `opencode session list` in the worktree, then
     `opencode run --auto --session <id> --model <model> "<review notes>"`.
 - Junie: `scripts/run-junie.sh <worktree> <log-name> "<task>"`. Every round is a new cold run, so say "one new commit on
   top; do not amend".
@@ -70,7 +73,8 @@ The runners in [scripts/](scripts/) prepend [developer-rules.md](developer-rules
 
 ## Keep runs healthy
 
-- A run whose log has not grown for 30 minutes is stuck: kill it by its PID (never by pattern) and resume the session.
+- A run whose log has not grown for 30 minutes is stuck: kill it by its PID (never by pattern), then resume the
+  session (opencode) or start a new run (Junie).
 - Check CPU with `ps` for runs that loop on long scripts; time-box exploratory work in the task.
 - Run heavy or real checks yourself (browser suites, workflow runs, dispatches on CI) when the developer or the
   machine cannot.

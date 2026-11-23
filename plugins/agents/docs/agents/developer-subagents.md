@@ -53,7 +53,8 @@ the full browser suite caught regressions the developers' focused runs missed in
 - **Long loops:** a geometry fix took seven hours of extract-and-debug cycles; one study script ran for almost two hours
   at full CPU.
 - **Extra decision records:** a developer added a second decision record for a follow-up and renumbered the stack.
-- **The lead's own notes:** a review note suggested pulling a moving image tag to read its label, which broke a CD
-  rule the task had stated. The compliance reviewer caught it.
+- **The lead's own notes:** a review note suggested pulling a moving image tag to read its label. That broke the CD
+  rule of the time (only release or commit tags; test runs got an exception later), which the task itself stated. The
+  compliance reviewer caught it.
 - **Junie faults:** CSS features no browser supports, a test that tested its own copy of the logic, failures called
   "pre-existing" without running them on the base branch, app behaviour loosened so its own test passed.

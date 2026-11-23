@@ -11,7 +11,7 @@ rules_text=$(cat "$rules") || exit 1
 cd "$worktree" || exit 1
 start=$(date +%s)
 junie --skip-update-check --model junie-lite --system-prompt "$rules_text" \
-  --project "$worktree" --task "$task" >"$log" 2>&1
+  --project "$PWD" --task "$task" >"$log" 2>&1
 status=$?
 echo "exit $status after $(( $(date +%s) - start ))s log $log"
 tail -60 "$log"

@@ -1,7 +1,7 @@
 ---
 summary: Why CI and CD are split into devs' and ops' zones, how artifacts flow from the dev registry to pre/prod, and a worked example for static sites as OCI artifacts.
 rules: ../../skills/cicd-general/SKILL.md
-updated: 2026-11-15
+updated: 2026-11-23
 ---
 
 # CI vs CD
@@ -108,7 +108,8 @@ The setup these conventions were written for:
   Registry and deploy to Cloud Run.
 - **Auth:** CD workflows use Workload Identity Federation (WIF). In test-run mode the WIF credentials resolve to a
   test-run GCP project (see [test-run model](test-run-model.md)).
-- **Paths:** CD pulls only images under `ghcr.io/${{ github.repository }}`, with the release tag or commit SHA.
+- **Paths:** CD pulls only images under `ghcr.io/${{ github.repository }}`; which tags it may use is set by
+  `cicd-general`, CD workflows rules 7 and 8.
 - **Prerelease flow:** pushing `v1.2.3-rc.1` makes `ci.yml` push `ghcr.io/<repo>:<sha>` and
   `ghcr.io/<repo>:v1.2.3-rc.1`. Creating the GitHub prerelease runs `cd-pre-release.yml`, which retags into the
   environment's Artifact Registry (`<preprod-registry>/<repo>:<sha>` and `:<tag>`) and deploys to Cloud Run pre/prod.
