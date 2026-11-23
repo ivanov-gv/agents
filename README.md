@@ -28,7 +28,7 @@ The content is split three ways, following the knowledge / rules / procedures mo
 | Kind | How it is used | Skills |
 | --- | --- | --- |
 | **Must-follow guidelines.** These should hold whenever you touch matching files. | The model loads them by description. Their path scopes in [guidelines.json](plugins/agents/guidelines.json) tell the compliance reviewer which apply to a change, and `install.sh --claude-rules` can turn them into a project's `.claude/rules`. | `code-general`, `code-general-testing`, `code-golang-conventions`, `code-golang-testing`, `code-golang-lint`, `code-golang-docker`, `cicd-github`, `cicd-general`, `code-general-documentation` |
-| **Procedures and reference.** Use these on demand. | Skill registry only | `code-general-optimisation`, `code-golang-optimisation`, `contribute-cli`, `compliance-review` |
+| **Procedures and reference.** Use these on demand. | Skill registry only | `code-general-optimisation`, `code-golang-optimisation`, `contribute-cli`, `compliance-review`, `developer-subagents` |
 
 ### No hooks
 

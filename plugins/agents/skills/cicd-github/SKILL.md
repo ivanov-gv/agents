@@ -63,6 +63,11 @@ Details and examples: [monorepo pipelines](../../docs/cicd/github-monorepo.md).
    of what happened during the step.
 5. A step that pipes a command needs an explicit `shell: bash`. The default has no `pipefail`, so a failed API call piped
    into `jq` looks like an empty, normal result.
+6. Job outputs are strings. Compare one before passing it to a `type: boolean` input of a reusable workflow
+   (`${{ needs.plan.outputs.flag == 'true' }}`): GitHub rejects the call before any job starts, and actionlint cannot
+   see the output's type.
+7. `gh api --paginate` writes one JSON document per page. Use `--slurp` for one array of pages, or `--jq` to filter each
+   page, before parsing the result as one document.
 
 ## Local runs and linting
 
@@ -79,7 +84,9 @@ Examples: [local testing and linting](../../docs/cicd/github-local-testing.md).
 
 - GHCR is the dev registry. `ghcr.io/${{ github.repository }}:${{ github.sha }}` is a production-grade artifact ready
   to be deployed.
-- CD pulls only artifacts under the `ghcr.io/${{ github.repository }}` prefix, tagged with the release tag or the commit SHA.
+- CD pulls only artifacts under the `ghcr.io/${{ github.repository }}` prefix. It deploys by the release tag or the
+  commit SHA; a test run may resolve one through a moving tag (`cicd-general`, CD workflows rule 8). Read the tag's
+  commit label without pulling it (`docker buildx imagetools inspect --format '{{json .Image}}'`), then pull by commit.
 - CD workflows are triggered by `release` or `workflow_dispatch` events.
 - Non-image artifacts are packaged as OCI images in GHCR. Details:
   [CI vs CD](../../docs/cicd/ci-vs-cd.md#static-site-as-an-oci-artifact--worked-example).
